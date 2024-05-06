@@ -11,7 +11,7 @@
 package main
 
 import (
-	"context"
+	"sync/atomic"
 	"time"
 )
 
@@ -20,26 +20,26 @@ import (
 type User struct {
 	ID        int
 	IsPremium bool
-	TimeUsed  int64 // in seconds
+	TimeUsed  atomic.Int64 // in seconds
 }
 
 // HandleRequest runs the processes requested by users. Returns false
 // if process had to be killed
 func HandleRequest(process func(), u *User) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	done := make(chan bool, 1)
+	done := make(chan int64, 1)
 	go func() {
+		start := time.Now()
 		process()
-		done <- true
+		timePassed := int64(time.Now().Sub(start).Seconds())
+
+		done <- timePassed
 	}()
 
 	select {
-	case <-done:
-		return true
-	case <-ctx.Done():
-		return u.IsPremium
+	case consumedTime := <-done:
+		u.TimeUsed.Add(consumedTime)
+
+		return u.TimeUsed.Load() <= 10 || u.IsPremium
 	}
 }
 
