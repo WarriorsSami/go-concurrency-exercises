@@ -43,7 +43,6 @@ func Crawl(url string, depth int, wg *sync.WaitGroup, rateLimiter *rate.Limiter,
 		// called concurrently
 		go Crawl(u, depth-1, wg, rateLimiter, ctx)
 	}
-	return
 }
 
 func main() {

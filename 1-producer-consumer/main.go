@@ -30,19 +30,11 @@ func producer(stream Stream, tweetChan chan *Tweet, wg *sync.WaitGroup) {
 
 func consumer(tweetChan chan *Tweet, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
-		select {
-		case t, ok := <-tweetChan:
-			// check if channel is closed
-			if !ok {
-				return
-			}
-
-			if t.IsTalkingAboutGo() {
-				fmt.Println(t.Username, "\ttweets about golang")
-			} else {
-				fmt.Println(t.Username, "\tdoes not tweet about golang")
-			}
+	for t := range tweetChan {
+		if t.IsTalkingAboutGo() {
+			fmt.Println(t.Username, "\ttweets about golang")
+		} else {
+			fmt.Println(t.Username, "\tdoes not tweet about golang")
 		}
 	}
 }
